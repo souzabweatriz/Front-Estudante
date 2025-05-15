@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Pagination, Modal, Card, Skeleton } from "antd";
 import { ToastContainer, toast } from "react-toastify";
-import { getSessionsStorage, setSessionsStorage } from "@/utils/sectionStorage";
+import { getSessionStorage, setSessionStorage } from "../../utils/sectionStorage";
 import Image from "next/image";
 import styles from "../alunos/Alunos.module.css";
 
@@ -25,27 +25,29 @@ export default function Alunos() {
     });
 
     useEffect(() => {
-        const fetchAlunos = async () => {
-            const cached = getSessionsStorage("alunosData", []);
-            if (cached.length > 0) {
-                setData({ alunos: cached, loading: false, current: 1, pageSize: 5 });
-                return;
+      const fetchAlunos = async () => {
+        const cached = getSessionStorage("alunosData", []);
+        if (cached.length > 0) {
+          setData({ alunos: cached, loading: false, current: 1, pageSize: 5 });
+          return;
+        }
+  
+        try {
+          const { data: alunos } = await axios.get(
+            `${process.env.NEXT_PUBLIC_API_URL}/estudantes`,
+            {
+              headers: HEADERS,
             }
-            try {
-                const { data: alunos } = await axios.get(
-                    `${process.env.NEXT_PUBLIC_API_URL}/estudantes`,
-                    {
-                        headers: HEADERS,
-                    }
-                );
-                setSessionsStorage("alunosData", alunos);
-                setData({ alunos, loading: false, current: 1, pageSize: 5 });
-            } catch (error) {
-                toast.error("Erro ao carregar alunos");
-                setData((d) => ({ ...d, loading: false }));
-            }
-        };
-        fetchAlunos();
+          );
+          setSessionStorage("alunosData", alunos);
+          setData({ alunos, loading: false, current: 1, pageSize: 5 });
+        } catch {
+          toast.error("Erro ao carregar alunos");
+          setData((d) => ({ ...d, loading: false }));
+        }
+      };
+  
+      fetchAlunos();
     }, []);
 
     const openModal = async (aluno) => {
@@ -77,7 +79,6 @@ export default function Alunos() {
         const start = (data.current - 1) * data.pageSize;
         return data.alunos.slice(start, start + data.pageSize);
     };
-
     return (
         <div>
             <ToastContainer />
@@ -94,7 +95,7 @@ export default function Alunos() {
             />
             {data.loading ? (
                 <Image
-                    src="/image/loading.gif"
+                    src="/images/loading.gif"
                     width={100}
                     height={100}
                     alt="Loading"
@@ -109,10 +110,10 @@ export default function Alunos() {
                             onClick={() => openModal(aluno)}
                             cover={
                                 <Image
-                                    src={aluno.foto}
-                                    alt={aluno.nome}
-                                    width={100}
-                                    height={100}
+                                    src={aluno.photo ? aluno.photo : "/images/220.svg"}
+                                    alt={aluno.name_estudante}
+                                    width={220}
+                                    height={220}
                                     className={styles.image}
                                 />
                             }
